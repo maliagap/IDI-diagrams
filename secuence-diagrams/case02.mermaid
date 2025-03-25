@@ -1,0 +1,55 @@
+sequenceDiagram
+    actor Cliente
+    participant AplicacionMovil
+    participant ServicioAutenticacion
+    participant ServicioCampañas
+    participant ServicioTarjetas
+    participant ServicioSMS
+    participant ServicioCorreo
+
+    Cliente->>AplicacionMovil: Iniciar Sesión
+    AplicacionMovil->>ServicioAutenticacion: Validar Credenciales
+    ServicioAutenticacion-->>AplicacionMovil: Autenticación Exitosa
+
+    AplicacionMovil->>ServicioCampañas: Consultar Campañas Vigentes
+    ServicioCampañas-->>AplicacionMovil: Verificar Campañas
+
+    alt Tiene Campañas
+        AplicacionMovil->>Cliente: Mostrar Campañas Disponibles
+        Cliente->>AplicacionMovil: Seleccionar Campaña
+
+        AplicacionMovil->>Cliente: Preguntar por Tarjeta Física
+        
+        alt Desea Tarjeta Física
+            AplicacionMovil->>Cliente: Elegir Método de Entrega
+            
+            alt Recoger en Agencia
+                Cliente->>AplicacionMovil: Seleccionar Agencia
+            else Entrega a Domicilio
+                Cliente->>AplicacionMovil: Ingresar Dirección
+            end
+        end
+
+        AplicacionMovil->>Cliente: Mostrar Términos y Condiciones
+        Cliente->>AplicacionMovil: Aceptar Términos
+
+        AplicacionMovil->>ServicioSMS: Generar Token
+        ServicioSMS->>Cliente: Enviar Token por SMS
+
+        Cliente->>AplicacionMovil: Ingresar Token
+        AplicacionMovil->>ServicioSMS: Validar Token
+
+        alt Token Válido
+            AplicacionMovil->>ServicioTarjetas: Procesar Solicitud de Tarjeta
+            ServicioTarjetas->>ServicioCorreo: Enviar Términos de Emisión
+            ServicioCorreo->>Cliente: Notificar por Correo
+        else Token Inválido
+            AplicacionMovil->>Cliente: Notificar Error de Token
+            Cliente->>AplicacionMovil: Solicitar Nuevo Token
+            AplicacionMovil->>ServicioSMS: Solicitar Reenvío de Token
+            ServicioSMS->>Cliente: Reenviar Token por SMS
+        end
+    else Sin Campañas
+        AplicacionMovil->>Cliente: Notificar Sin Campañas Disponibles
+        AplicacionMovil->>Cliente: Finalizar Proceso
+    end

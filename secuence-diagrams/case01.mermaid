@@ -1,0 +1,52 @@
+sequenceDiagram
+    actor Usuario
+    participant AplicacionMovil
+    participant ServicioAutenticacion
+    participant ServicioTarjetas
+    participant ServicioValidacion
+    participant ServicioSMS
+    participant ServicioCorreo
+
+    Usuario->>AplicacionMovil: Iniciar Sesión
+    AplicacionMovil->>ServicioAutenticacion: Validar Credenciales
+    ServicioAutenticacion-->>AplicacionMovil: Confirmar Autenticación
+
+    AplicacionMovil->>ServicioTarjetas: Consultar Tarjetas Registradas
+    ServicioTarjetas-->>AplicacionMovil: Mostrar Tarjetas Débito y Crédito
+
+    Usuario->>AplicacionMovil: Seleccionar Tarjeta
+    AplicacionMovil->>Usuario: Solicitar Motivo de Re-emisión
+    Usuario->>AplicacionMovil: Ingresar Motivo
+
+    AplicacionMovil->>ServicioValidacion: Verificar Tipo de Tarjeta
+    ServicioValidacion-->>AplicacionMovil: Resultado de Validación
+
+    alt Tarjeta Física
+        AplicacionMovil->>Usuario: Preguntar Método de Entrega
+        
+        alt Recoger en Agencia
+            Usuario->>AplicacionMovil: Seleccionar Agencia
+        else Entrega a Domicilio
+            Usuario->>AplicacionMovil: Ingresar Dirección de Entrega
+        end
+    end
+
+    AplicacionMovil->>Usuario: Mostrar Términos y Condiciones
+    Usuario->>AplicacionMovil: Aceptar Términos
+
+    AplicacionMovil->>ServicioSMS: Generar Token
+    ServicioSMS->>Usuario: Enviar Token por SMS
+
+    Usuario->>AplicacionMovil: Ingresar Token
+    AplicacionMovil->>ServicioSMS: Validar Token
+
+    alt Token Válido
+        AplicacionMovil->>ServicioTarjetas: Procesar Solicitud de Re-emisión
+        ServicioTarjetas->>ServicioCorreo: Enviar Términos de Renovación
+        ServicioCorreo->>Usuario: Notificar por Correo Electrónico
+    else Token Inválido
+        AplicacionMovil->>Usuario: Notificar Error de Token
+        Usuario->>AplicacionMovil: Solicitar Nuevo Token
+        AplicacionMovil->>ServicioSMS: Solicitar Reenvío de Token
+        ServicioSMS->>Usuario: Reenviar Token por SMS
+    end

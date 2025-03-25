@@ -1,0 +1,73 @@
+sequenceDiagram
+    actor Cliente
+    participant AplicacionMovil
+    participant ServicioAutenticacion
+    participant ServicioCuentas
+    participant ServicioTarjetas
+    participant ServicioSMS
+    participant ServicioCorreo
+
+    Cliente->>AplicacionMovil: Iniciar Sesión
+    AplicacionMovil->>ServicioAutenticacion: Validar Credenciales
+    ServicioAutenticacion-->>AplicacionMovil: Autenticación Exitosa
+
+    AplicacionMovil->>ServicioCuentas: Consultar Cuentas de Ahorro
+    ServicioCuentas-->>AplicacionMovil: Verificar Cuentas
+
+    alt Tiene Cuentas de Ahorro
+        AplicacionMovil->>Cliente: Mostrar Cuentas Disponibles
+        Cliente->>AplicacionMovil: Seleccionar Cuenta
+    else Sin Cuentas de Ahorro
+        AplicacionMovil->>Cliente: Mostrar Tipos de Cuenta
+        Cliente->>AplicacionMovil: Seleccionar Tipo de Cuenta
+        AplicacionMovil->>Cliente: Seleccionar Moneda
+        Cliente->>AplicacionMovil: Elegir Moneda (Soles/Dólares)
+
+        AplicacionMovil->>ServicioSMS: Generar Token para Creación de Cuenta
+        ServicioSMS->>Cliente: Enviar Token por SMS
+
+        Cliente->>AplicacionMovil: Ingresar Token
+        AplicacionMovil->>ServicioSMS: Validar Token
+
+        alt Token Válido
+            AplicacionMovil->>ServicioCuentas: Crear Nueva Cuenta
+            ServicioCuentas->>ServicioCorreo: Enviar Términos de Creación
+            ServicioCorreo->>Cliente: Notificar por Correo
+        else Token Inválido
+            AplicacionMovil->>Cliente: Notificar Error de Token
+            Cliente->>AplicacionMovil: Solicitar Nuevo Token
+            AplicacionMovil->>ServicioSMS: Solicitar Reenvío de Token
+            ServicioSMS->>Cliente: Reenviar Token por SMS
+        end
+    end
+
+    AplicacionMovil->>Cliente: Preguntar por Tarjeta Física
+    
+    alt Desea Tarjeta Física
+        AplicacionMovil->>Cliente: Elegir Método de Entrega
+        
+        alt Recoger en Agencia
+            Cliente->>AplicacionMovil: Seleccionar Agencia
+        else Entrega a Domicilio
+            Cliente->>AplicacionMovil: Ingresar Dirección
+        end
+
+        AplicacionMovil->>Cliente: Mostrar Términos y Condiciones
+        Cliente->>AplicacionMovil: Aceptar Términos
+
+        AplicacionMovil->>ServicioSMS: Generar Token para Tarjeta
+        ServicioSMS->>Cliente: Enviar Token por SMS
+
+        Cliente->>AplicacionMovil: Ingresar Token
+        AplicacionMovil->>ServicioSMS: Validar Token
+
+        alt Token Válido
+            AplicacionMovil->>ServicioTarjetas: Crear Nueva Tarjeta
+            AplicacionMovil->>Cliente: Mostrar Tarjeta Digital
+        else Token Inválido
+            AplicacionMovil->>Cliente: Notificar Error de Token
+            Cliente->>AplicacionMovil: Solicitar Nuevo Token
+            AplicacionMovil->>ServicioSMS: Solicitar Reenvío de Token
+            ServicioSMS->>Cliente: Reenviar Token por SMS
+        end
+    end

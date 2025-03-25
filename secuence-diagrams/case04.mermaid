@@ -1,0 +1,104 @@
+sequenceDiagram
+    actor Cliente
+    participant Aplicacion
+    participant SistemaValidacion
+    participant ServicioIdentidad
+    participant ServicioBancario
+    participant ServicioTarjetas
+
+    Cliente->>Aplicacion: Hace clic en Registrarse
+    Aplicacion->>Cliente: Solicitar Número de DNI
+    Cliente->>Aplicacion: Ingresar DNI
+    Aplicacion->>SistemaValidacion: Verificar existencia de cuenta
+    
+    alt Cuenta Existente
+        SistemaValidacion-->>Aplicacion: Cuenta ya registrada
+        Aplicacion-->>Cliente: Redirigir a Inicio de Sesión
+    else Nueva Cuenta
+        Aplicacion-->>Cliente: Mostrar Términos y Condiciones
+        Cliente->>Aplicacion: Aceptar Términos
+        
+        Aplicacion-->>Cliente: Solicitar Foto DNI Frontal
+        Cliente->>Aplicacion: Cargar Foto DNI Frontal
+        Aplicacion-->>Cliente: Solicitar Foto DNI Reverso
+        Cliente->>Aplicacion: Cargar Foto DNI Reverso
+        Aplicacion-->>Cliente: Solicitar Video de Rostro
+        Cliente->>Aplicacion: Cargar Video de Rostro
+        
+        Aplicacion->>ServicioIdentidad: Enviar Documentos para Validación
+        ServicioIdentidad->>SistemaValidacion: Validar Identidad
+        
+        alt Identidad Válida
+            SistemaValidacion-->>Aplicacion: Validación Exitosa
+            Aplicacion-->>Cliente: Solicitar Datos Laborales
+            Cliente->>Aplicacion: Ingresar Nombre de Empresa
+            Cliente->>Aplicacion: Ingresar Dirección de Empresa
+            
+            Aplicacion-->>Cliente: Mostrar Preguntas KyC
+            Cliente->>Aplicacion: Responder Preguntas KyC
+            
+            Aplicacion-->>Cliente: Solicitar Correo Electrónico
+            Cliente->>Aplicacion: Ingresar Correo Electrónico
+            Aplicacion-->>Cliente: Solicitar Número Móvil
+            Cliente->>Aplicacion: Ingresar Número Móvil
+            
+            Aplicacion->>ServicioBancario: Enviar Número Móvil
+            ServicioBancario-->>Cliente: Enviar Token SMS
+            
+            Aplicacion-->>Cliente: Solicitar Ingreso de Token
+            Cliente->>Aplicacion: Ingresar Token
+            Aplicacion->>ServicioBancario: Validar Token
+            
+            alt Token Válido
+                ServicioBancario-->>Aplicacion: Token Correcto
+                Aplicacion-->>Cliente: Solicitar Tipo de Cuenta
+                Cliente->>Aplicacion: Seleccionar Tipo de Cuenta
+                Aplicacion-->>Cliente: Solicitar Tipo de Moneda
+                Cliente->>Aplicacion: Seleccionar Tipo de Moneda
+                
+                Aplicacion-->>Cliente: Solicitar Contraseña
+                Cliente->>Aplicacion: Registrar Contraseña
+                Aplicacion-->>Cliente: Mostrar Términos Cuenta Bancaria
+                Cliente->>Aplicacion: Aceptar Términos Cuenta Bancaria
+                
+                Aplicacion->>ServicioBancario: Crear Cuenta
+                ServicioBancario-->>Aplicacion: Cuenta Creada
+                
+                Aplicacion-->>Cliente: Confirmar Inicio de Sesión
+                Cliente->>Aplicacion: Iniciar Sesión
+                
+                Aplicacion-->>Cliente: Solicitar Tarjeta de Débito Digital
+                Cliente->>Aplicacion: Seleccionar Cuenta de Débito
+                Aplicacion-->>Cliente: Solicitar Tipo de Tarjeta
+                Cliente->>Aplicacion: Seleccionar Visa/Mastercard
+                
+                Aplicacion-->>Cliente: Preguntar sobre Tarjeta Física
+                
+                alt Desea Tarjeta Física
+                    Cliente->>Aplicacion: Seleccionar Método de Entrega
+                    
+                    alt Entrega a Domicilio
+                        Aplicacion-->>Cliente: Solicitar Dirección
+                        Cliente->>Aplicacion: Ingresar Dirección
+                    else Recoger en Agencia
+                        Aplicacion-->>Cliente: Solicitar Ubicación de Agencia
+                        Cliente->>Aplicacion: Seleccionar Ubicación
+                    end
+                end
+                
+                Aplicacion-->>Cliente: Mostrar Términos de Tarjeta
+                Cliente->>Aplicacion: Aceptar Términos de Tarjeta
+                
+                Aplicacion->>ServicioTarjetas: Solicitar Tarjeta
+                ServicioTarjetas-->>Aplicacion: Tarjeta Generada
+                
+                Aplicacion-->>Cliente: Mostrar Productos Adquiridos
+            else Token Inválido
+                ServicioBancario-->>Aplicacion: Token Incorrecto
+                Aplicacion-->>Cliente: Solicitar Reenvío de Token
+            end
+        else Identidad Inválida
+            SistemaValidacion-->>Aplicacion: Validación Fallida
+            Aplicacion-->>Cliente: Notificar Error de Identidad
+        end
+    end
